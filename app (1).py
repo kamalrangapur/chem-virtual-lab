@@ -2509,3 +2509,95 @@ st.caption(
     "🧪 Cheminformatics Virtual Laboratory | "
     "Developed using Python, Streamlit and RDKit"
 )
+# =====================================================
+# EXTERNAL FEATURE: PUBCHEM DATABASE SEARCH
+# =====================================================
+
+import requests
+from urllib.parse import quote
+
+st.markdown("---")
+st.header("🌐 External Chemical Database Search")
+
+st.write(
+    "Search for a compound and retrieve its chemical "
+    "information directly from PubChem."
+)
+
+compound_name = st.text_input(
+    "Enter compound name",
+    placeholder="Example: Aspirin"
+)
+
+if st.button("Search PubChem"):
+
+    if not compound_name.strip():
+        st.warning("Please enter a compound name.")
+
+    else:
+        api_url = (
+            "https://pubchem.ncbi.nlm.nih.gov/rest/pug/"
+            f"compound/name/{quote(compound_name.strip())}/"
+            "property/MolecularFormula,MolecularWeight,"
+            "IUPACName,ConnectivitySMILES,XLogP/JSON"
+        )
+
+        try:
+            response = requests.get(api_url, timeout=15)
+            response.raise_for_status()
+
+            data = response.json()
+            compound = data["PropertyTable"]["Properties"][0]
+
+            cid = compound["CID"]
+
+            st.success("Compound found in PubChem!")
+
+            col1, col2 = st.columns(2)
+
+            with col1:
+                st.metric(
+                    "Molecular Formula",
+                    compound.get("MolecularFormula", "N/A")
+                )
+
+                st.metric(
+                    "Molecular Weight",
+                    str(compound.get("MolecularWeight", "N/A"))
+                    + " g/mol"
+                )
+
+            with col2:
+                st.metric(
+                    "XLogP",
+                    str(compound.get("XLogP", "N/A"))
+                )
+
+                st.write("**PubChem CID:**", cid)
+
+            st.write(
+                "**IUPAC Name:**",
+                compound.get("IUPACName", "Not available")
+            )
+
+            st.write(
+                "**Connectivity SMILES:**",
+                compound.get("ConnectivitySMILES", "Not available")
+            )
+
+            st.markdown(
+                f"[View complete compound record on PubChem]"
+                f"(https://pubchem.ncbi.nlm.nih.gov/compound/{cid})"
+            )
+
+        except requests.exceptions.RequestException:
+            st.error(
+                "Unable to connect to PubChem. "
+                "Please check your internet connection."
+            )
+
+        except (KeyError, IndexError, ValueError):
+            st.warning(
+                "Compound information was not found. "
+                "Try another compound name."
+            )
