@@ -1528,29 +1528,19 @@ def generate_multi_final_report(student_name, registration_number, molecule_reco
 
 st.sidebar.title("🧪 Virtual Lab")
 
-page = st.sidebar.radio(
-
+ page = st.sidebar.radio(
     "Navigation",
-
     [
-
         "🏠 Home",
-
         "📖 Theory",
-
         "🧬 Molecular Visualization",
-
         "📊 Molecular Properties Report",
-
         "📈 Structure–Property Analysis",
-
         "📝 Assessment",
-
-        "📄 Final Project Report"
-
+        "📄 Final Project Report",
+        "🌐 PubChem Database Search"
     ]
 )
-
 st.sidebar.divider()
 
 st.sidebar.markdown("### 👩‍🎓 Student Information")
