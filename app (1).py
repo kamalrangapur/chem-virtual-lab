@@ -1528,7 +1528,7 @@ def generate_multi_final_report(student_name, registration_number, molecule_reco
 
 st.sidebar.title("🧪 Virtual Lab")
 
- page = st.sidebar.radio(
+page = st.sidebar.radio(
     "Navigation",
     [
         "🏠 Home",
