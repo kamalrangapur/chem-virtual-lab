@@ -2499,101 +2499,181 @@ elif page == "📄 Final Project Report":
 # FOOTER
 # ============================================================
 
+# ============================================================
+# PUBCHEM DATABASE SEARCH
+# ============================================================
+
+elif page == "🌐 PubChem Database Search":
+
+    st.title("🌐 External Chemical Database - PubChem")
+
+    st.write("""
+    Search for chemical compounds using the PubChem database.
+
+    Retrieve molecular formula, molecular weight, IUPAC name,
+    SMILES notation and other chemical information.
+    """)
+
+    st.divider()
+
+    compound_name = st.text_input(
+        "Enter Compound Name",
+        placeholder="Example: Aspirin, Caffeine, Paracetamol",
+        key="pubchem_compound_name"
+    )
+
+    if st.button("🔍 Search PubChem", key="pubchem_search_button"):
+
+        if not compound_name.strip():
+
+            st.warning("Please enter a compound name.")
+
+        else:
+
+            api_url = (
+                "https://pubchem.ncbi.nlm.nih.gov/rest/pug/"
+                f"compound/name/{quote(compound_name.strip())}/"
+                "property/MolecularFormula,MolecularWeight,"
+                "IUPACName,ConnectivitySMILES,XLogP/JSON"
+            )
+
+            try:
+
+                with st.spinner("Searching PubChem database..."):
+
+                    response = requests.get(
+                        api_url,
+                        timeout=20
+                    )
+
+                    response.raise_for_status()
+
+                    data = response.json()
+
+                compound = data["PropertyTable"]["Properties"][0]
+
+                cid = compound["CID"]
+
+                formula = compound.get(
+                    "MolecularFormula", "N/A"
+                )
+
+                molecular_weight = compound.get(
+                    "MolecularWeight", "N/A"
+                )
+
+                iupac_name = compound.get(
+                    "IUPACName", "Not available"
+                )
+
+                smiles = compound.get(
+                    "ConnectivitySMILES", ""
+                )
+
+                xlogp = compound.get(
+                    "XLogP", "N/A"
+                )
+
+                st.session_state.pubchem_smiles = smiles
+
+                st.success("Compound successfully found in PubChem!")
+
+                st.subheader("🧪 Compound Information")
+
+                col1, col2, col3 = st.columns(3)
+
+                col1.metric(
+                    "Molecular Formula",
+                    formula
+                )
+
+                col2.metric(
+                    "Molecular Weight",
+                    f"{molecular_weight} g/mol"
+                )
+
+                col3.metric(
+                    "XLogP",
+                    str(xlogp)
+                )
+
+                st.write("**PubChem CID:**", cid)
+
+                st.write("**IUPAC Name:**", iupac_name)
+
+                st.write("**Connectivity SMILES:**")
+
+                st.code(smiles or "Not available")
+
+                st.markdown(
+                    f"[View Complete PubChem Record]"
+                    f"(https://pubchem.ncbi.nlm.nih.gov/compound/{cid})"
+                )
+
+                # Load PubChem SMILES into the 3D visualizer
+
+                if smiles:
+
+                    st.divider()
+
+                    st.subheader("🧬 Visualize Retrieved Molecule")
+
+                    if st.button(
+                        "Load This Molecule into 3D Visualizer",
+                        key="load_pubchem_molecule"
+                    ):
+
+                        st.session_state.active_smiles = smiles
+
+                        st.success(
+                            "SMILES loaded! Open Molecular Visualization "
+                            "from the sidebar to generate its 3D structure."
+                        )
+
+            except requests.exceptions.HTTPError as e:
+
+                if e.response is not None and e.response.status_code == 404:
+
+                    st.warning(
+                        "Compound not found. Try another chemical name."
+                    )
+
+                else:
+
+                    st.error(
+                        f"PubChem returned an HTTP error: {e}"
+                    )
+
+            except requests.exceptions.Timeout:
+
+                st.error(
+                    "PubChem request timed out. Please try again."
+                )
+
+            except requests.exceptions.RequestException as e:
+
+                st.error(
+                    f"Unable to connect to PubChem: {e}"
+                )
+
+            except (KeyError, IndexError, ValueError):
+
+                st.warning(
+                    "Unable to read compound information. "
+                    "Try another compound name."
+                )
+
+    st.divider()
+
+    st.info(
+        "PubChem is an external chemical database maintained by "
+        "the National Center for Biotechnology Information (NCBI)."
+    )
+
 st.divider()
 
 st.caption(
     "🧪 Cheminformatics Virtual Laboratory | "
     "Developed using Python, Streamlit and RDKit"
 )
-# =====================================================
-# EXTERNAL FEATURE: PUBCHEM DATABASE SEARCH
-# =====================================================
-
-import requests
-from urllib.parse import quote
-
-st.markdown("---")
-st.header("🌐 External Chemical Database Search")
-
-st.write(
-    "Search for a compound and retrieve its chemical "
-    "information directly from PubChem."
-)
-
-compound_name = st.text_input(
-    "Enter compound name",
-    placeholder="Example: Aspirin"
-)
-
-if st.button("Search PubChem"):
-
-    if not compound_name.strip():
-        st.warning("Please enter a compound name.")
-
-    else:
-        api_url = (
-            "https://pubchem.ncbi.nlm.nih.gov/rest/pug/"
-            f"compound/name/{quote(compound_name.strip())}/"
-            "property/MolecularFormula,MolecularWeight,"
-            "IUPACName,ConnectivitySMILES,XLogP/JSON"
-        )
-
-        try:
-            response = requests.get(api_url, timeout=15)
-            response.raise_for_status()
-
-            data = response.json()
-            compound = data["PropertyTable"]["Properties"][0]
-
-            cid = compound["CID"]
-
-            st.success("Compound found in PubChem!")
-
-            col1, col2 = st.columns(2)
-
-            with col1:
-                st.metric(
-                    "Molecular Formula",
-                    compound.get("MolecularFormula", "N/A")
-                )
-
-                st.metric(
-                    "Molecular Weight",
-                    str(compound.get("MolecularWeight", "N/A"))
-                    + " g/mol"
-                )
-
-            with col2:
-                st.metric(
-                    "XLogP",
-                    str(compound.get("XLogP", "N/A"))
-                )
-
-                st.write("**PubChem CID:**", cid)
-
-            st.write(
-                "**IUPAC Name:**",
-                compound.get("IUPACName", "Not available")
-            )
-
-            st.write(
-                "**Connectivity SMILES:**",
-                compound.get("ConnectivitySMILES", "Not available")
-            )
-
-            st.markdown(
-                f"[View complete compound record on PubChem]"
-                f"(https://pubchem.ncbi.nlm.nih.gov/compound/{cid})"
-            )
-
-        except requests.exceptions.RequestException:
-            st.error(
-                "Unable to connect to PubChem. "
-                "Please check your internet connection."
-            )
-
-        except (KeyError, IndexError, ValueError):
-            st.warning(
-                "Compound information was not found. "
-                "Try another compound name."
-            )
+ 
