@@ -1,7 +1,9 @@
 streamlit
 pandas
 matplotlib
-py3Dmol
 rdkit
+py3Dmol
 reportlab
 requests
+numpy
+Pillow
