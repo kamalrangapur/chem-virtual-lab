@@ -1,3 +1,5 @@
+import requests
+from urllib.parse import quote
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -265,44 +267,48 @@ def generate_2d_image(mol):
 def generate_3d_molecule(mol):
 
     try:
-
-        mol3d = Chem.AddHs(mol)
+        mol3d = Chem.AddHs(Chem.Mol(mol))
 
         params = AllChem.ETKDGv3()
-
         params.randomSeed = 42
 
-        status = AllChem.EmbedMolecule(
-            mol3d,
-            params
-        )
+        status = AllChem.EmbedMolecule(mol3d, params)
 
         if status != 0:
             return None
 
+        # Try MMFF optimization first
+        optimization_status = -1
+
         try:
-
-            AllChem.MMFFOptimizeMolecule(
-                mol3d
-            )
-
+            if AllChem.MMFFHasAllMoleculeParams(mol3d):
+                optimization_status = AllChem.MMFFOptimizeMolecule(
+                    mol3d,
+                    maxIters=500
+                )
         except Exception:
+            optimization_status = -1
+
+        # If MMFF fails, try UFF
+        if optimization_status != 0:
 
             try:
-
-                AllChem.UFFOptimizeMolecule(
-                    mol3d
-                )
-
+                if AllChem.UFFHasAllMoleculeParams(mol3d):
+                    AllChem.UFFOptimizeMolecule(
+                        mol3d,
+                        maxIters=500
+                    )
             except Exception:
                 pass
 
         return mol3d
 
-    except Exception:
-
+    except Exception as e:
+        print("3D generation error:", e)
         return None
-
+ 
+        
+    
 
 # ============================================================
 # DISPLAY 3D STRUCTURE
